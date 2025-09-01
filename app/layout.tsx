@@ -5,7 +5,10 @@ import './globals.css'
 import { NavigationMenu } from "@/components/ui/navigation-menu";
 
 export const metadata: Metadata = {
-  title: 'GEO PRO|专业AI搜索优化解决方案',
+  title:{
+    default:'GEO PRO|专业AI搜索优化解决方案',
+    template:"%s · GEO PRO",
+  },
   description: '我们为企业提供专业生成式AI搜索优化方案：中文内容策略、FAQ结构化与知识图谱建设，助力品牌在文心一言、Kimi、智谱、讯飞等 AI 搜索中获得更高可见度与转化。。',
   generator: 'GEO - AI搜索优化 by GEO PRO',
   alternates: {
