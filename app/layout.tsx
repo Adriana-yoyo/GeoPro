@@ -5,11 +5,22 @@ import './globals.css'
 import { NavigationMenu } from "@/components/ui/navigation-menu";
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'GEO PRO|专业AI搜索优化解决方案',
+  description: '我们为企业提供专业生成式AI搜索优化方案：中文内容策略、FAQ结构化与知识图谱建设，助力品牌在文心一言、Kimi、智谱、讯飞等 AI 搜索中获得更高可见度与转化。。',
+  generator: 'GEO - AI搜索优化 by GEO PRO',
+  alternates: {
+    canonical: "https://geopro-forbusiness.vercel.app/",
 }
-
+    openGraph: {
+    type: "website",
+    url: "https://geopro-forbusiness.vercel.app/",
+    title: "中国市场 GEO（生成式AI搜索优化）服务｜GEO PRO",
+    description:
+      "中文优先、结构化FAQ、知识图谱与权威引用，面向文心一言/Kimi/智谱/讯飞等 AI 搜索。",
+        
+    locale: "zh_CN",
+  },
+};
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
