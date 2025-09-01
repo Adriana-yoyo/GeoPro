@@ -32,30 +32,39 @@ interface Article {
 }
 type HomeArticle = Article;
 
-// ArticleModal：补充显式类型
 type ArticleModalProps = {
   article: Article | null;
   onClose: () => void;
 };
 
 const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
-  if (!article) return null;
+  const [mounted, setMounted] = useState(false);
 
-  // 锁定 body 滚动 + ESC 关闭
+  // 仅在客户端挂载后再渲染 Portal，避免 "document is undefined" / 水合时机问题
   useEffect(() => {
-    const original = document.body.style.overflow;
+    setMounted(true);
+  }, []);
+
+  // 锁滚动 + ESC 关闭
+  useEffect(() => {
+    if (!mounted || !article) return;
+
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
+
     return () => {
-      document.body.style.overflow = original;
+      document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [onClose]);
+  }, [mounted, article, onClose]);
 
-  // 点击遮罩关闭，阻止气泡到内容层
+  if (!article || !mounted) return null;
+
   const overlay = (
     <div
       role="dialog"
@@ -65,9 +74,7 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
       onClick={onClose}
     >
       <div
-        className="relative my-10 w-full max-w-3xl rounded-2xl bg-white shadow-2xl
-                   ring-1 ring-black/5 transition-transform duration-200 ease-out
-                   animate-[fadeIn_120ms_ease-out]"
+        className="relative my-10 w-full max-w-3xl rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 关闭按钮 */}
@@ -83,7 +90,6 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
 
         {/* 内容 */}
         <div className="px-6 py-6 md:px-8 md:py-8">
-          {/* 头部元信息（可按需显示更多字段） */}
           <div className="mb-4 flex items-center gap-3 text-sm text-gray-500">
             {article.category && (
               <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
@@ -95,16 +101,13 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
           </div>
 
           <h2 className="mb-2 text-3xl font-bold leading-tight text-gray-900">{article.title}</h2>
-          {article.description && (
-            <p className="mb-6 text-lg text-gray-600">{article.description}</p>
-          )}
+          {article.description && <p className="mb-6 text-lg text-gray-600">{article.description}</p>}
 
           <hr className="mb-6 border-gray-200" />
 
-          {/* 正文：如果 content 是纯文本，用 whitespace-pre-line 保留换行 */}
+          {/* 正文：纯文本用 whitespace-pre-line；若将来是 HTML 字符串，换成 dangerouslySetInnerHTML */}
           <article className="prose max-w-none text-gray-800 prose-p:leading-7">
             <p className="whitespace-pre-line">{article.content}</p>
-            {/* 若 content 将来是 HTML 字符串，改用下面这行： */}
             {/* <div dangerouslySetInnerHTML={{ __html: article.content }} /> */}
           </article>
         </div>
@@ -112,9 +115,11 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
     </div>
   );
 
-  // 使用 Portal，避免被父层样式影响
+  // 只在客户端挂载之后才调用 portal
   return createPortal(overlay, document.body);
 };
+
+export default ArticleModal;
 
 export default function HomePage() {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
