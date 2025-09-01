@@ -145,6 +145,20 @@ export default function HomePage() {
   })();
 }, []);
   
+    useEffect(() => {
+  (async () => {
+    try {
+      const res = await fetch("/api/categories", { cache: "no-store" });
+      const data = await res.json();
+      const map = new Map<string, string>();
+      (data.items || []).forEach((c: any) => map.set(c.slug, c.name));
+      setArticles(prev => prev.map(a => ({ ...a, category: map.get(a.category) || a.category })));
+    } catch (e) {
+      console.error("Load categories failed", e);
+    }
+  })();
+}, []);
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
