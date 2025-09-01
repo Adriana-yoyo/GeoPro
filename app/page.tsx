@@ -119,8 +119,6 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
   return createPortal(overlay, document.body);
 };
 
-export default ArticleModal;
-
 export default function HomePage() {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
