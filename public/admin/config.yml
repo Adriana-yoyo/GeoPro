@@ -1,1 +1,53 @@
+backend:
+  name: github
+  repo: Adriana-yoyo/GeoPro    # ← 改成你的 仓库 owner/repo
+  branch: main                        # 生产分支
+  base_url: https://geopro-forbusiness.vercel.app/   # ← 改成你的 OAuth 服务域名
+  auth_endpoint: /auth
+
+publish_mode: editorial_workflow      # 推荐：草稿→审核→发布；若想直接提交用 simple
+
+media_folder: "public/uploads"        # 实际文件存放目录
+public_folder: "/uploads"             # 页面访问时的 URL 前缀
+
+site_url: "https://geopro-forbusiness.vercel.app"    # 可选：站点地址
+logo_url: "/favicon.ico"                                 # 可选：后台 Logo
+
+collections:
+  # 分类集合：先管理所有分类
+  - name: "categories"
+    label: "分类"
+    folder: "content/categories"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "名称", name: "name", widget: "string", required: true }
+      - { label: "Slug", name: "slug", widget: "slug", required: true, hint: "URL 标识（自动根据名称生成，可修改）" }
+      - { label: "描述", name: "description", widget: "text", required: false }
+      - { label: "排序", name: "order", widget: "number", required: false, default: 0, value_type: "int" }
+
+  # 文章集合：写文章/选分类/设置展示时间
+  - name: "articles"
+    label: "文章"
+    folder: "content/articles"
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}} · {{displayDate | default(publishedAt)}}"
+    fields:
+      - { label: "标题", name: "title", widget: "string", required: true }
+      - { label: "摘要", name: "description", widget: "text", required: true }
+      - { label: "封面", name: "cover", widget: "image", required: false, choose_url: true }
+      - label: "分类"
+        name: "category"
+        widget: "relation"
+        collection: "categories"
+        search_fields: ["name", "slug"]
+        value_field: "slug"          # 存分类的 slug
+        display_fields: ["name"]
+        required: true
+        options_length: 50
+      - { label: "标签", name: "tags", widget: "list", required: false, allow_add: true }
+      - { label: "展示时间（可自定义显示）", name: "displayDate", widget: "datetime", required: false, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "发布时间（真实）", name: "publishedAt", widget: "datetime", required: true, format: "YYYY-MM-DDTHH:mm:ssZ", hint: "默认保存时自动填充，可手动调整" }
+      - { label: "内容", name: "body", widget: "markdown", required: true }
 
