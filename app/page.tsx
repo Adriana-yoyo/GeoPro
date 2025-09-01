@@ -121,6 +121,8 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
 
 export default function HomePage() {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  
+  const [articles, setArticles] = useState<HomeArticle[]>([]);
   useEffect(() => {
   (async () => {
     try {
