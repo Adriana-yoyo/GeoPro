@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import ReactMarkdown from "react-markdown";
 
 // 类型
 interface Article {
@@ -107,8 +108,7 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
 
           {/* 正文：纯文本用 whitespace-pre-line；若将来是 HTML 字符串，换成 dangerouslySetInnerHTML */}
           <article className="prose max-w-none text-gray-800 prose-p:leading-7">
-            <p className="whitespace-pre-line">{article.content}</p>
-            {/* <div dangerouslySetInnerHTML={{ __html: article.content }} /> */}
+            <ReactMarkdown>{article.content}</ReactMarkdown>
           </article>
         </div>
       </div>
