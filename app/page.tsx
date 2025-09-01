@@ -18,7 +18,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { createPortal } from "lucide-react";
+import { createPortal } from "react-dom";
 
 // 类型
 interface Article {
@@ -126,7 +126,6 @@ export default function HomePage() {
     const element = document.getElementById(sectionId);
     if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  const [openFaq, setOpenFaq] = useState<number | null>(0); // 默认展开第 1 条
   const [openFaqs, setOpenFaqs] = useState<Set<number>>(new Set([0,1,2,3,4,5,6,7]));
 // 如果想默认全部收起：改成 new Set()
 
