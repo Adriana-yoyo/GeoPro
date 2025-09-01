@@ -106,7 +106,7 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
 
           <hr className="mb-6 border-gray-200" />
 
-          {/* 正文：纯文本用 whitespace-pre-line；若将来是 HTML 字符串，换成 dangerouslySetInnerHTML */}
+          {/* 正文：Markdown 渲染 */}
           <article className="prose max-w-none text-gray-800 prose-p:leading-7">
             <ReactMarkdown>{article.content}</ReactMarkdown>
           </article>
@@ -121,50 +121,50 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
 
 export default function HomePage() {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  
+
   const [articles, setArticles] = useState<HomeArticle[]>([]);
   useEffect(() => {
-  (async () => {
-    try {
-      const res = await fetch("/api/articles", { cache: "no-store" });
-      const data = await res.json();
-      setArticles(
-        (data.items || []).map((it: any) => ({
-          id: it.slug,
-          title: it.title,
-          description: it.description,
-          publishDate: it.displayDate || (it.publishedAt ? String(it.publishedAt).slice(0,10) : ""),
-          readTime: "",      // 暂无就留空；后续你也可在 frontmatter 增加 readTime
-          category: it.category,
-          content: it.content,  // 给弹窗展示全文
-        }))
-      );
-    } catch (e) {
-      console.error("Load articles failed", e);
-    }
-  })();
-}, []);
-  
-    useEffect(() => {
-  (async () => {
-    try {
-      const res = await fetch("/api/categories", { cache: "no-store" });
-      const data = await res.json();
-      const map = new Map<string, string>();
-      (data.items || []).forEach((c: any) => map.set(c.slug, c.name));
-      setArticles(prev => prev.map(a => ({ ...a, category: map.get(a.category) || a.category })));
-    } catch (e) {
-      console.error("Load categories failed", e);
-    }
-  })();
-}, []);
+    (async () => {
+      try {
+        const res = await fetch("/api/articles", { cache: "no-store" });
+        const data = await res.json();
+        setArticles(
+          (data.items || []).map((it: any) => ({
+            id: it.slug,
+            title: it.title,
+            description: it.description,
+            publishDate: it.displayDate || (it.publishedAt ? String(it.publishedAt).slice(0, 10) : ""),
+            readTime: "", // 暂无就留空；后续你也可在 frontmatter 增加 readTime
+            category: it.category,
+            content: it.content, // 给弹窗展示全文
+          }))
+        );
+      } catch (e) {
+        console.error("Load articles failed", e);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/categories", { cache: "no-store" });
+        const data = await res.json();
+        const map = new Map<string, string>();
+        (data.items || []).forEach((c: any) => map.set(c.slug, c.name));
+        setArticles((prev) => prev.map((a) => ({ ...a, category: map.get(a.category) || a.category })));
+      } catch (e) {
+        console.error("Load categories failed", e);
+      }
+    })();
+  }, []);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  const [openFaqs, setOpenFaqs] = useState<Set<number>>(new Set([0,1,2,3,4,5,6,7]));
-// 如果想默认全部收起：改成 new Set()
+  const [openFaqs, setOpenFaqs] = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5, 6, 7]));
+  // 如果想默认全部收起：改成 new Set()
 
   return (
     <div className="min-h-screen bg-white" style={{ scrollBehavior: "smooth" }}>
@@ -309,198 +309,198 @@ export default function HomePage() {
         </section>
 
         {/* FAQ */}
-<section id="faq" className="px-8 py-24 relative overflow-hidden">
-  {/* 背景点缀渐变 */}
-  <div className="pointer-events-none absolute inset-0 -z-10">
-    <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-purple-200/40 blur-3xl" />
-    <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
-  </div>
+        <section id="faq" className="px-8 py-24 relative overflow-hidden">
+          {/* 背景点缀渐变 */}
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-purple-200/40 blur-3xl" />
+            <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
+          </div>
 
-  <div className="text-center mb-16">
-    <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 font-semibold mb-3 tracking-wide">
-      — 常见问题 FAQ
-    </p>
-    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-      您可能关心的问题
-    </h2>
-    <p className="text-gray-600">还有疑问？在底部联系我们即可。</p>
-  </div>
+          <div className="text-center mb-16">
+            <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 font-semibold mb-3 tracking-wide">
+              — 常见问题 FAQ
+            </p>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+              您可能关心的问题
+            </h2>
+            <p className="text-gray-600">还有疑问？在底部联系我们即可。</p>
+          </div>
 
-  {(() => {
-    const faqs = [
-      { q: "什么是 GEO 优化？", a: "GEO 是面向 AI 搜索/生成式问答的内容优化方法，帮助内容被正确理解、引用与推荐。" },
-      { q: "GEO 与传统 SEO 有何不同？", a: "SEO 更关注关键词和链接；GEO 关注“问题意图—结构化知识—可引用性”，面向对话式检索与答案质量。" },
-      { q: "内容如何更容易被 AI 引用？", a: "进行意图图谱设计、清晰结构与证据、权威来源标注，并进行多平台分发以提升可检索与可引用性。" },
-      { q: "适用的业务/内容场景有哪些？", a: "SaaS、教育、医疗、金融、专业服务、产品文档/FAQ、案例研究等知识密集型场景效果最好。" },
-      { q: "项目周期与典型流程？", a: "通常 4–8 周：审计与基线 → 意图图谱与策略 → 内容生产与结构化 → 分发 → 监测与迭代。" },
-      { q: "如何衡量 GEO 的效果？", a: "AI 引用/提及、答案质量与覆盖度、目标问题命中率、品牌/产品召回、流量与转化等指标。" },
-      { q: "是否需要大改现有网站？", a: "无需大改。增加结构化版块（FAQ/文档中心/参考页）、完善元数据与站内链接即可获得显著提升。" },
-      { q: "交付物都包含什么？", a: "意图图谱、内容规划与模板、落地页/FAQ 文案、多平台分发清单、监测报表；费用按范围与内容量评估。" },
-    ];
+          {(() => {
+            const faqs = [
+              { q: "什么是 GEO 优化？", a: "GEO 是面向 AI 搜索/生成式问答的内容优化方法，帮助内容被正确理解、引用与推荐。" },
+              { q: "GEO 与传统 SEO 有何不同？", a: "SEO 更关注关键词和链接；GEO 关注“问题意图—结构化知识—可引用性”，面向对话式检索与答案质量。" },
+              { q: "内容如何更容易被 AI 引用？", a: "进行意图图谱设计、清晰结构与证据、权威来源标注，并进行多平台分发以提升可检索与可引用性。" },
+              { q: "适用的业务/内容场景有哪些？", a: "SaaS、教育、医疗、金融、专业服务、产品文档/FAQ、案例研究等知识密集型场景效果最好。" },
+              { q: "项目周期与典型流程？", a: "通常 4–8 周：审计与基线 → 意图图谱与策略 → 内容生产与结构化 → 分发 → 监测与迭代。" },
+              { q: "如何衡量 GEO 的效果？", a: "AI 引用/提及、答案质量与覆盖度、目标问题命中率、品牌/产品召回、流量与转化等指标。" },
+              { q: "是否需要大改现有网站？", a: "无需大改。增加结构化版块（FAQ/文档中心/参考页）、完善元数据与站内链接即可获得显著提升。" },
+              { q: "交付物都包含什么？", a: "意图图谱、内容规划与模板、落地页/FAQ 文案、多平台分发清单、监测报表；费用按范围与内容量评估。" },
+            ];
 
-    const toggle = (idx: number) => {
-      setOpenFaqs(prev => {
-        const next = new Set(prev);
-        next.has(idx) ? next.delete(idx) : next.add(idx);
-        return next;
-      });
-    };
+            const toggle = (idx: number) => {
+              setOpenFaqs((prev) => {
+                const next = new Set(prev);
+                next.has(idx) ? next.delete(idx) : next.add(idx);
+                return next;
+              });
+            };
 
-    return (
-      <div className="mx-auto max-w-4xl space-y-4">
-        {faqs.map((item, i) => {
-          const isOpen = openFaqs.has(i);
-          return (
-            <div
-              key={i}
-              className={[
-                "group rounded-2xl border border-white/40 bg-white/70 backdrop-blur-md",
-                "shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.10)]",
-                "transition-all duration-300"
-              ].join(" ")}
-            >
-              <button
-                type="button"
-                aria-expanded={isOpen}
-                onClick={() => toggle(i)}
-                className="w-full px-6 py-5 text-left flex items-center gap-3"
-              >
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-                  <HelpCircle className="h-5 w-5" />
-                </span>
-                <span className="flex-1 text-lg md:text-xl font-semibold text-gray-900">
-                  {item.q}
-                </span>
-                <ChevronDown
-                  className={[
-                    "h-5 w-5 text-gray-400 transition-transform duration-300",
-                    isOpen ? "rotate-180" : ""
-                  ].join(" ")}
-                />
-              </button>
+            return (
+              <div className="mx-auto max-w-4xl space-y-4">
+                {faqs.map((item, i) => {
+                  const isOpen = openFaqs.has(i);
+                  return (
+                    <div
+                      key={i}
+                      className={[
+                        "group rounded-2xl border border-white/40 bg-white/70 backdrop-blur-md",
+                        "shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.10)]",
+                        "transition-all duration-300",
+                      ].join(" ")}
+                    >
+                      <button
+                        type="button"
+                        aria-expanded={isOpen}
+                        onClick={() => toggle(i)}
+                        className="w-full px-6 py-5 text-left flex items-center gap-3"
+                      >
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                          <HelpCircle className="h-5 w-5" />
+                        </span>
+                        <span className="flex-1 text-lg md:text-xl font-semibold text-gray-900">
+                          {item.q}
+                        </span>
+                        <ChevronDown
+                          className={[
+                            "h-5 w-5 text-gray-400 transition-transform duration-300",
+                            isOpen ? "rotate-180" : "",
+                          ].join(" ")}
+                        />
+                      </button>
 
-              <div
-                className={[
-                  "grid transition-all duration-300 ease-out",
-                  isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                ].join(" ")}
-              >
-                <div className="overflow-hidden">
-                  <div className="px-6 pb-6 pt-0 text-gray-600 leading-7">{item.a}</div>
-                </div>
+                      <div
+                        className={[
+                          "grid transition-all duration-300 ease-out",
+                          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+                        ].join(" ")}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="px-6 pb-6 pt-0 text-gray-600 leading-7">{item.a}</div>
+                        </div>
+                      </div>
+
+                      {!isOpen && (
+                        <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-
-              {!isOpen && (
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  })()}
-</section>
+            );
+          })()}
+        </section>
 
         {/* Articles Preview */}
-<section id="articles-preview" className="px-8 py-20 bg-white">
-  <div className="text-center mb-16">
-    <p className="text-purple-600 font-semibold mb-4">— 专业文章 Articles</p>
-    <h2 className="text-4xl font-bold text-gray-900 mb-4">精选文章</h2>
-    <h3 className="text-2xl text-gray-600">Featured Articles</h3>
-  </div>
+        <section id="articles-preview" className="px-8 py-20 bg-white">
+          <div className="text-center mb-16">
+            <p className="text-purple-600 font-semibold mb-4">— 专业文章 Articles</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">精选文章</h2>
+            <h3 className="text-2xl text-gray-600">Featured Articles</h3>
+          </div>
 
-  <div className="max-w-6xl mx-auto">
-   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-  {(articles.length ? articles : []).map((art) => (
-    <div key={art.id}>
-      <div
-        onClick={() => setSelectedArticle(art)}
-        className="border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105 transform bg-white rounded-xl"
-      >
-        <div className="p-6 pb-4 flex-1">
-          <div className="mb-3">
-            <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-              {art.category}
-            </span>
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors duration-300 leading-tight">
-            {art.title}
-          </h3>
-          <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
-            {art.description}
-          </p>
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>{art.publishDate}</span>
-            <span>{art.readTime}</span>
-          <div className="mt-3">
-            <Link
-              href={`/articles/${art.id}`}
-              className="text-sm text-purple-600 hover:underline"
-              onClick={(e) => e.stopPropagation()} // 避免冒泡触发弹窗
-            >
-              在新页面打开 →
-            </Link>
-          </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  ))}
-  {!articles.length && (
-    <div className="col-span-full text-center text-gray-500">
-      暂无文章，去 /admin 新建一篇试试～
-    </div>
-  )}
-</div>
+          <div className="max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {(articles.length ? articles : []).map((art) => (
+                <div key={art.id}>
+                  <div
+                    onClick={() => setSelectedArticle(art)}
+                    className="border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105 transform bg-white rounded-xl"
+                  >
+                    <div className="p-6 pb-4 flex-1">
+                      <div className="mb-3">
+                        <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                          {art.category}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors duration-300 leading-tight">
+                        {art.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                        {art.description}
+                      </p>
 
-    <div className="text-center mt-12">
-      <Button
-        asChild
-        variant="outline"
-        className="border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300 hover:scale-105 transform px-8 py-3 bg-transparent"
-      >
-        <Link href="/articles">查看更多文章 View More Articles</Link>
-      </Button>
-    </div>
-  </div>
-</section>
+                      {/* 日期/阅读时长 */}
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>{art.publishDate}</span>
+                        <span>{art.readTime}</span>
+                      </div>
+
+                      {/* 在新页面打开（避免冒泡触发弹窗） */}
+                      <div className="mt-3">
+                        <Link
+                          href={`/articles/${art.id}`}
+                          className="text-sm text-purple-600 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          在新页面打开 →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {!articles.length && (
+                <div className="col-span-full text-center text-gray-500">
+                  暂无文章，去 /admin 新建一篇试试～
+                </div>
+              )}
+            </div>
+
+            <div className="text-center mt-12">
+              <Button
+                asChild
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300 hover:scale-105 transform px-8 py-3 bg-transparent"
+              >
+                <Link href="/articles">查看更多文章 View More Articles</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
 
         {/* Contact */}
-<section id="contact" className="px-8 py-24 bg-gray-50">
-  <div className="text-center mb-16">
-    <p className="text-purple-600 font-semibold mb-4">— 联系我们 Contact</p>
-    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-3">随时咨询</h2>
-    <h3 className="text-2xl text-gray-600">Get in touch with us</h3>
-  </div>
+        <section id="contact" className="px-8 py-24 bg-gray-50">
+          <div className="text-center mb-16">
+            <p className="text-purple-600 font-semibold mb-4">— 联系我们 Contact</p>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-3">随时咨询</h2>
+            <h3 className="text-2xl text-gray-600">Get in touch with us</h3>
+          </div>
 
-  {/* 关键点：max-w 调成 5xl，栅格改为 1/2 列；卡片加 w-full 让其撑满列 */}
-  <div className="mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8">
-    {/* Email */}
-    <div className="w-full h-full p-8 border border-gray-100 rounded-2xl
-                    bg-white shadow-sm hover:shadow-md transition-shadow">
-      <Mail className="h-6 w-6 text-purple-600 mb-3" />
-      <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
-      <a
-        href="mailto:632205280@qq.com"
-        className="text-gray-700 hover:text-purple-600 underline-offset-4 hover:underline break-all"
-      >
-        632205280@qq.com
-      </a>
-    </div>
+          {/* 关键点：max-w 调成 5xl，栅格改为 1/2 列；卡片加 w-full 让其撑满列 */}
+          <div className="mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Email */}
+            <div className="w-full h-full p-8 border border-gray-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow">
+              <Mail className="h-6 w-6 text-purple-600 mb-3" />
+              <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
+              <a
+                href="mailto:632205280@qq.com"
+                className="text-gray-700 hover:text-purple-600 underline-offset-4 hover:underline break-all"
+              >
+                632205280@qq.com
+              </a>
+            </div>
 
-    {/* 小红书 */}
-    <div className="w-full h-full p-8 border border-gray-100 rounded-2xl
-                    bg-white shadow-sm hover:shadow-md transition-shadow">
-      <MessageCircle className="h-6 w-6 text-purple-600 mb-3" />
-      <h4 className="font-semibold text-gray-900 mb-1">小红书</h4>
-      <p className="text-gray-700">账号：505776905</p>
-    </div>
-  </div>
-</section>
+            {/* 小红书 */}
+            <div className="w-full h-full p-8 border border-gray-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow">
+              <MessageCircle className="h-6 w-6 text-purple-600 mb-3" />
+              <h4 className="font-semibold text-gray-900 mb-1">小红书</h4>
+              <p className="text-gray-700">账号：505776905</p>
+            </div>
+          </div>
+        </section>
 
-        {selectedArticle && (
-          <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />
-        )}
+        {selectedArticle && <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />}
       </div>
     </div>
   );
