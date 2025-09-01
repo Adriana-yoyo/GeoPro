@@ -432,6 +432,15 @@ export default function HomePage() {
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span>{art.publishDate}</span>
             <span>{art.readTime}</span>
+          <div className="mt-3">
+            <Link
+              href={`/articles/${art.id}`}
+              className="text-sm text-purple-600 hover:underline"
+              onClick={(e) => e.stopPropagation()} // 避免冒泡触发弹窗
+            >
+              在新页面打开 →
+            </Link>
+          </div>
           </div>
         </div>
       </div>
