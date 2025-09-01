@@ -121,7 +121,28 @@ const ArticleModal = ({ article, onClose }: ArticleModalProps) => {
 
 export default function HomePage() {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-
+  useEffect(() => {
+  (async () => {
+    try {
+      const res = await fetch("/api/articles", { cache: "no-store" });
+      const data = await res.json();
+      setArticles(
+        (data.items || []).map((it: any) => ({
+          id: it.slug,
+          title: it.title,
+          description: it.description,
+          publishDate: it.displayDate || (it.publishedAt ? String(it.publishedAt).slice(0,10) : ""),
+          readTime: "",      // 暂无就留空；后续你也可在 frontmatter 增加 readTime
+          category: it.category,
+          content: it.content,  // 给弹窗展示全文
+        }))
+      );
+    } catch (e) {
+      console.error("Load articles failed", e);
+    }
+  })();
+}, []);
+  
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -373,68 +394,39 @@ export default function HomePage() {
   </div>
 
   <div className="max-w-6xl mx-auto">
-    {(() => {
-      const homeArticles: HomeArticle[] = [
-        {
-          id: "1",
-          title: "AI搜索引擎优化完全指南",
-          description: "深入了解如何优化内容以在AI驱动的搜索引擎中获得更好的可见性。",
-          publishDate: "2024-01-15",
-          readTime: "8分钟阅读",
-          category: "基础指南",
-          content: "【全文】这是一篇关于 GEO 的完整指南……",
-        },
-        {
-          id: "2",
-          title: "大模型时代的内容策略转型",
-          description: "探讨品牌内容策略应如何调整以适应新的信息获取方式。",
-          publishDate: "2024-01-12",
-          readTime: "6分钟阅读",
-          category: "策略分析",
-          content: "【全文】在大模型时代，内容从关键词导向转为问题与意图导向……",
-        },
-        {
-          id: "3",
-          title: "提问意图图谱构建实战",
-          description: "展示如何分析用户提问模式，构建问题地图指导内容创作。",
-          publishDate: "2024-01-10",
-          readTime: "10分钟阅读",
-          category: "实战案例",
-          content: "【全文】从收集问题→聚类归纳→构建问题树……",
-        },
-      ];
-
-      return (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {homeArticles.map((art) => (
-            <div key={art.id}>
-              <div
-                onClick={() => setSelectedArticle(art)}
-                className="border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105 transform bg-white rounded-xl"
-              >
-                <div className="p-6 pb-4 flex-1">
-                  <div className="mb-3">
-                    <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-                      {art.category}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors duration-300 leading-tight">
-                    {art.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
-                    {art.description}
-                  </p>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{art.publishDate}</span>
-                    <span>{art.readTime}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+  {(articles.length ? articles : []).map((art) => (
+    <div key={art.id}>
+      <div
+        onClick={() => setSelectedArticle(art)}
+        className="border border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105 transform bg-white rounded-xl"
+      >
+        <div className="p-6 pb-4 flex-1">
+          <div className="mb-3">
+            <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+              {art.category}
+            </span>
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors duration-300 leading-tight">
+            {art.title}
+          </h3>
+          <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+            {art.description}
+          </p>
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>{art.publishDate}</span>
+            <span>{art.readTime}</span>
+          </div>
         </div>
-      );
-    })()}
+      </div>
+    </div>
+  ))}
+  {!articles.length && (
+    <div className="col-span-full text-center text-gray-500">
+      暂无文章，去 /admin 新建一篇试试～
+    </div>
+  )}
+</div>
 
     <div className="text-center mt-12">
       <Button
