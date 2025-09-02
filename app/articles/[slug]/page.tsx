@@ -155,8 +155,10 @@ export default async function ArticlePage({
           <hr className="my-6 border-gray-200" />
 
           <article className="prose prose-lg max-w-none prose-p:leading-7">
-            {/* 启用 GFM + 规范化内容 */}
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
+            <div
+              // 这里假设 API 返回的就是一段完整 HTML（带 <h2>、<p>、<ul> 等）
+              dangerouslySetInnerHTML={{ __html: (article.content || "").trim() }}
+            />
           </article>
         </div>
       </main>
