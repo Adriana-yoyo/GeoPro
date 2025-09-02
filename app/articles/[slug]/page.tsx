@@ -156,7 +156,6 @@ export default async function ArticlePage({
 
           <article className="prose prose-lg max-w-none prose-p:leading-7">
             <div
-              // 这里假设 API 返回的就是一段完整 HTML（带 <h2>、<p>、<ul> 等）
               dangerouslySetInnerHTML={{ __html: (article.content || "").trim() }}
             />
           </article>
