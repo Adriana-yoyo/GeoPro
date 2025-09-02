@@ -1,86 +1,112 @@
 // app/articles/[slug]/page.tsx
-
+import type { Metadata } from "next";
+import ReactMarkdown from "react-markdown";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
-export const revalidate = 0; // 不缓存，便于你改完文章立即生效
-
-type Frontmatter = {
-  title?: string;
+// 根据你的 API 返回结构调整
+type ArticleDetail = {
+  slug: string;
+  title: string;
   description?: string;
-  category?: string;
+  content: string;
+  category?: string;   // 存 slug 或名称都可
   displayDate?: string;
-  publishedAt?: string | number | Date;
 };
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  // 用你已存在的 API 读取 frontmatter，生成 <title> 等
-  const res = await fetch(`/api/articles/${params.slug}`, { cache: "no-store" });
-  if (!res.ok) return { title: "文章详情" };
-  const { frontmatter } = await res.json();
-  const fm = (frontmatter || {}) as Frontmatter;
+// —— 数据获取（服务端）——
+async function getArticle(slug: string): Promise<ArticleDetail | null> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/articles?slug=${slug}`, {
+      // 生产上可以用 'force-cache' 提升性能；后台改动后由重新部署/ISR 失效
+      cache: "no-store",
+      // 若你设置了自定义域，NEXTPUBLIC_SITE_URL 需要在 Vercel 环境变量中配置
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    // 你的 /api/articles 如果是列表接口，这里挑出对应项
+    const item = (data.items || []).find((i: any) => i.slug === slug);
+    if (!item) return null;
+
+    return {
+      slug: item.slug,
+      title: item.title,
+      description: item.description,
+      content: item.content,
+      category: item.category,
+      displayDate: item.displayDate || (item.publishedAt ? String(item.publishedAt).slice(0, 10) : ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// —— 动态元信息 ——
+// 注意：如果你的 API 很慢，可以只填最基础的 title，或改为静态 fallback
+export async function generateMetadata(
+  { params }: { params: { slug: string } }
+): Promise<Metadata> {
+  const article = await getArticle(params.slug);
+  if (!article) {
+    return { title: "文章未找到 | GEO PRO" };
+  }
+  const title = article.title || "精选文章 | GEO PRO";
+  const description = article.description || "精选文章";
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/articles/${article.slug}`;
+
   return {
-    title: fm.title || "文章详情",
-    description: fm.description || "精选文章",
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      url,
+      siteName: "GEO PRO",
+      locale: "zh_CN",
+    },
+    alternates: { canonical: url },
   };
 }
 
-export default async function ArticleDetailPage({ params }: { params: { slug: string } }) {
-  // 直接调用你已有的单篇 API；相对路径在服务端也可用
-  const res = await fetch(`/api/articles/${params.slug}`, { cache: "no-store" });
-
-  if (!res.ok) {
-    return (
-      <main className="px-6 py-16">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-semibold mb-3">未找到该文章</h1>
-          <p className="text-gray-600">请检查链接是否正确，或返回文章列表。</p>
-          <Link href="/articles" className="text-purple-600 hover:underline mt-6 inline-block">
-            ← 返回文章列表
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  const data = await res.json();
-  const fm = (data.frontmatter || {}) as Frontmatter;
-
-  const title = fm.title || "精选文章";
-  const description = fm.description || "精选文章";
-  const category = fm.category || "精选文章";
-  const date =
-    fm.displayDate || (fm.publishedAt ? String(fm.publishedAt).slice(0, 10) : "精选文章");
-  const content: string = data.content || "精选文章";
+// —— 页面主体 —— 
+export default async function ArticlePage({ params }: { params: { slug: string } }) {
+  const article = await getArticle(params.slug);
+  if (!article) notFound();
 
   return (
-    <main className="px-6 py-16">
-      <article className="max-w-3xl mx-auto">
-        {/* meta 行 */}
-        <div className="mb-4 flex items-center gap-3 text-sm text-gray-500">
-          <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full">
-            {category}
-          </span>
-          <span>{date}</span>
+    <main className="min-h-screen bg-white">
+      <div className="mx-auto max-w-3xl px-4 py-10">
+        <Link href="/articles" className="text-sm text-purple-600 hover:underline">
+          ← 返回文章列表
+        </Link>
+
+        <h1 className="mt-4 text-3xl md:text-4xl font-bold text-gray-900">{article.title}</h1>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+          {article.category && (
+            <span className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700">
+              {article.category}
+            </span>
+          )}
+          {article.displayDate && <span>{article.displayDate}</span>}
+          <button
+            className="ml-auto text-purple-600 hover:underline"
+            onClick={async () => {
+              await navigator.clipboard.writeText(window.location.href);
+              alert("链接已复制～");
+            }}
+          >
+            复制链接
+          </button>
         </div>
 
-        {/* 标题 & 摘要 */}
-        <h1 className="text-4xl font-bold text-gray-900 mb-3">{title}</h1>
-        <p className="text-gray-600 mb-8">{description}</p>
+        <hr className="my-6 border-gray-200" />
 
-        <hr className="mb-6" />
-
-        {/* 正文（先用纯文本换行展示；若你已在首页用 ReactMarkdown，这里也可替换） */}
-        <div className="prose max-w-none text-gray-800 prose-p:leading-7 whitespace-pre-line">
-          {content}
-        </div>
-
-        {/* 返回 */}
-        <div className="mt-10">
-          <Link href="/articles" className="text-purple-600 hover:underline">
-            ← 返回文章列表
-          </Link>
-        </div>
-      </article>
+        <article className="prose prose-lg max-w-none prose-p:leading-7">
+          <ReactMarkdown>{article.content}</ReactMarkdown>
+        </article>
+      </div>
     </main>
   );
 }
