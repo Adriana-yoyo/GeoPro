@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Script from "next/script"; // ✅ 新增：用于注入 JSON-LD
 
 // 根据你的 API 返回结构调整
 type ArticleDetail = {
@@ -12,19 +13,18 @@ type ArticleDetail = {
   content: string;
   category?: string;   // 存 slug 或名称都可
   displayDate?: string;
+  // ✅ 新增：可选 FAQ（无则不注入 Schema，不影响其它文章）
+  faq?: { q: string; a: string }[];
 };
 
 // —— 数据获取（服务端）——
 async function getArticle(slug: string): Promise<ArticleDetail | null> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/articles?slug=${slug}`, {
-      // 生产上可以用 'force-cache' 提升性能；后台改动后由重新部署/ISR 失效
       cache: "no-store",
-      // 若你设置了自定义域，NEXTPUBLIC_SITE_URL 需要在 Vercel 环境变量中配置
     });
     if (!res.ok) return null;
     const data = await res.json();
-    // 你的 /api/articles 如果是列表接口，这里挑出对应项
     const item = (data.items || []).find((i: any) => i.slug === slug);
     if (!item) return null;
 
@@ -35,6 +35,8 @@ async function getArticle(slug: string): Promise<ArticleDetail | null> {
       content: item.content,
       category: item.category,
       displayDate: item.displayDate || (item.publishedAt ? String(item.publishedAt).slice(0, 10) : ""),
+      // ✅ 新增：从接口透传（若无则为 undefined）
+      faq: item.faq,
     };
   } catch {
     return null;
@@ -42,7 +44,6 @@ async function getArticle(slug: string): Promise<ArticleDetail | null> {
 }
 
 // —— 动态元信息 ——
-// 注意：如果你的 API 很慢，可以只填最基础的 title，或改为静态 fallback
 export async function generateMetadata(
   { params }: { params: { slug: string } }
 ): Promise<Metadata> {
@@ -74,39 +75,63 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   const article = await getArticle(params.slug);
   if (!article) notFound();
 
+  // ✅ 将 Frontmatter/接口里的 FAQ 转成 JSON-LD（无 FAQ 时保持 null）
+  const faqEntities = (article.faq ?? []).map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  }));
+  const jsonLd =
+    faqEntities.length > 0
+      ? { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faqEntities }
+      : null;
+
   return (
-    <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-3xl px-4 py-10">
-        <Link href="/articles" className="text-sm text-purple-600 hover:underline">
-          ← 返回文章列表
-        </Link>
+    <>
+      {/* ✅ 注入 FAQ Schema 到 <head>（不会出现在正文；无 FAQ 不渲染） */}
+      {jsonLd && (
+        <Script
+          id="faq-schema"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
 
-        <h1 className="mt-4 text-3xl md:text-4xl font-bold text-gray-900">{article.title}</h1>
+      {/* ✅ 你原有的页面结构保持不变 */}
+      <main className="min-h-screen bg-white">
+        <div className="mx-auto max-w-3xl px-4 py-10">
+          <Link href="/articles" className="text-sm text-purple-600 hover:underline">
+            ← 返回文章列表
+          </Link>
 
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-500">
-          {article.category && (
-            <span className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700">
-              {article.category}
-            </span>
-          )}
-          {article.displayDate && <span>{article.displayDate}</span>}
-          <button
-            className="ml-auto text-purple-600 hover:underline"
-            onClick={async () => {
-              await navigator.clipboard.writeText(window.location.href);
-              alert("链接已复制～");
-            }}
-          >
-            复制链接
-          </button>
+          <h1 className="mt-4 text-3xl md:text-4xl font-bold text-gray-900">{article.title}</h1>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+            {article.category && (
+              <span className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700">
+                {article.category}
+              </span>
+            )}
+            {article.displayDate && <span>{article.displayDate}</span>}
+            <button
+              className="ml-auto text-purple-600 hover:underline"
+              onClick={async () => {
+                await navigator.clipboard.writeText(window.location.href);
+                alert("链接已复制～");
+              }}
+            >
+              复制链接
+            </button>
+          </div>
+
+          <hr className="my-6 border-gray-200" />
+
+          <article className="prose prose-lg max-w-none prose-p:leading-7">
+            <ReactMarkdown>{article.content}</ReactMarkdown>
+          </article>
         </div>
-
-        <hr className="my-6 border-gray-200" />
-
-        <article className="prose prose-lg max-w-none prose-p:leading-7">
-          <ReactMarkdown>{article.content}</ReactMarkdown>
-        </article>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
