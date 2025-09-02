@@ -8,6 +8,13 @@ readTime: "8分钟阅读"                  # 可选
 tags: ["GEO","AI搜索","品牌"]          # 可选
 ogImage: "/images/articles/why-geo/cover1.png"  # 封面图，建议与 slug 文件夹一致
 slug: "why-geo-in-ai-era"             # 建议与文件名保持一致
+faq:
+  -q:"GEO 和传统 SEO 有什么区别？"
+   a:"SEO 面向搜索引擎算法，GEO 面向大模型生成逻辑。SEO 关注关键词，GEO 关注“是否能被引用”。"
+   q:"GEO 优化多久能见效？"
+   a:"通常 1-3 个月内能看到答案曝光的提升，但需要持续迭代维护。"
+   q:"我的企业适合做 GEO 吗？"
+   a:"如果你希望品牌在 **AI 搜索问答** 中被提及（而不仅仅是有一个网页排名），那么 GEO 就是必须的。"
 ---
 ## 引言
 在传统搜索引擎时代，SEO（搜索引擎优化）曾是企业获取流量的关键手段。如今，随着 文心一言、Kimi、智谱、讯飞星火 等国内大模型搜索的兴起，用户不再依赖链接点击，而是直接通过 AI 生成的答案获取信息。
@@ -83,37 +90,4 @@ AI 搜索正在重塑互联网的流量格局。对于企业来说，**错过 SE
 
 ---
 
-<!--结构化数据标记 FAQ Schema for GEO 优化 -->
-<script type="application/ld+json">  //固定写法
-{
-  "@context": "https://schema.org",   //固定写法
-  "@type": "FAQPage",  //固定写法
-  "mainEntity": [
-    {      //起
-      "@type": "Question",
-      "name": "GEO 和传统 SEO 有什么区别？",    //填FAQ的问题
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "SEO 面向搜索引擎算法，GEO 面向大模型生成逻辑。SEO 关注关键词，GEO 关注“是否能被引用”。"     //填FAQ的问题
-      }
-    },    //止
-    {
-      "@type": "Question",
-      "name": "GEO 优化多久能见效？",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "通常 1-3 个月内能看到答案曝光的提升，但需要持续迭代维护。"
-      }
-    },
-       {      //起
-      "@type": "Question",
-      "name": "我的企业适合做 GEO 吗？",    //填FAQ的问题
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "如果你希望品牌在 **AI 搜索问答** 中被提及（而不仅仅是有一个网页排名），那么 GEO 就是必须的。  ”。"     //填FAQ的问题
-      }
-    },    //止
-  ]
-}
-</script>
 
