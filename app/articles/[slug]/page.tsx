@@ -1,20 +1,26 @@
 // app/articles/[slug]/page.tsx
 import type { Metadata } from "next";
-import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Script from "next/script";
-import remarkGfm from "remark-gfm";
+
+// 简单的 HTML 实体反转义（如果接口把 < > & 等转成了实体）
+const decodeEntities = (s: string) =>
+  (s || "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
 
 // 根据你的 API 返回结构调整
 type ArticleDetail = {
   slug: string;
   title: string;
   description?: string;
-  content: string;
-  category?: string; // 存 slug 或名称都可
+  content: string;         // 现在期待是一段 HTML 字符串
+  category?: string;
   displayDate?: string;
-  // 可选 FAQ（无则不注入 Schema，不影响其它文章）
   faq?: { q: string; a: string }[];
 };
 
@@ -23,9 +29,7 @@ async function getArticle(slug: string): Promise<ArticleDetail | null> {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/articles?slug=${slug}`,
-      {
-        cache: "no-store",
-      }
+      { cache: "no-store" }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -36,12 +40,12 @@ async function getArticle(slug: string): Promise<ArticleDetail | null> {
       slug: item.slug,
       title: item.title,
       description: item.description,
-      content: item.content,
+      content: item.content, // 这里应该是 HTML 字符串（若是实体会在下方 decode）
       category: item.category,
       displayDate:
         item.displayDate ||
         (item.publishedAt ? String(item.publishedAt).slice(0, 10) : ""),
-      faq: item.faq, // 透传 FAQ（可能为 undefined）
+      faq: item.faq,
     };
   } catch {
     return null;
@@ -75,16 +79,6 @@ export async function generateMetadata(
   };
 }
 
-// —— 工具：规范化 Markdown 文本（修复 #/**/--- 不渲染、换行被转义等） ——
-function normalizeMarkdown(raw: string) {
-  return (raw ?? "")
-    .replace(/^\uFEFF/, "") // 去 BOM
-    .replace(/\u00A0/g, " ") // NBSP -> 空格
-    .replace(/\r\n/g, "\n") // 统一换行
-    .replace(/\\n/g, "\n") // 字面量 \n -> 真换行（很多接口会这样返回）
-    .trim();
-}
-
 // —— 页面主体 ——
 export default async function ArticlePage({
   params,
@@ -109,8 +103,10 @@ export default async function ArticlePage({
         }
       : null;
 
-  // 规范化后的 Markdown
-  const md = normalizeMarkdown(article.content || "");
+  // 处理正文：如果被转义（包含 &lt; 或 &gt;），先反转义
+  const raw = (article.content || "").trim();
+  const html =
+    raw.includes("&lt;") || raw.includes("&gt;") ? decodeEntities(raw) : raw;
 
   return (
     <>
@@ -141,6 +137,7 @@ export default async function ArticlePage({
               </span>
             )}
             {article.displayDate && <span>{article.displayDate}</span>}
+            {/* 注意：如果这是服务端组件，这个 onClick 不会生效；需要的话将本文件改为 "use client" */}
             <button
               className="ml-auto text-purple-600 hover:underline"
               onClick={async () => {
@@ -154,11 +151,39 @@ export default async function ArticlePage({
 
           <hr className="my-6 border-gray-200" />
 
+          {/* —— 正文：强制用 HTML 渲染 —— */}
           <article className="prose prose-lg max-w-none prose-p:leading-7">
-            <div
-              dangerouslySetInnerHTML={{ __html: (article.content || "").trim() }}
-            />
+            <div dangerouslySetInnerHTML={{ __html: html }} />
           </article>
+
+          {/* ↓↓↓ 本地调试：确认链路是否生效（dev 模式可见，部署前可删除） ↓↓↓ */}
+          {process.env.NODE_ENV === "development" && (
+            <section style={{ marginTop: 24, padding: 12, border: "1px dashed #ddd" }}>
+              <div style={{ marginBottom: 8, fontSize: 12, opacity: 0.7 }}>
+                调试：下面应显示一个 H2 + 段落（用于验证 dangerouslySetInnerHTML 是否生效）
+              </div>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: "<h2>Sanity H2</h2><p>如果你看到这是大号小标题，说明 HTML 渲染链路 OK。</p>",
+                }}
+              />
+              <div style={{ marginTop: 10, fontSize: 12, opacity: 0.7 }}>
+                原始 content 前 160 个字符（用于确认是否被转义）：
+              </div>
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  fontSize: 12,
+                  background: "#f6f8fa",
+                  padding: 8,
+                  borderRadius: 6,
+                }}
+              >
+                {raw.slice(0, 160)}
+              </pre>
+            </section>
+          )}
+          {/* ↑↑↑ 本地调试 ↑↑↑ */}
         </div>
       </main>
     </>
